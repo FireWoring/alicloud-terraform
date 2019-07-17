@@ -140,6 +140,45 @@ func expandBackendServersWithPortToString(items []interface{}) string {
 	return fmt.Sprintf("[%s]", strings.Join(servers, COMMA_SEPARATED))
 }
 
+func expandMasterSlaveBackendServersToString(items []interface{}) string {
+
+	if len(items) < 1 {
+		return ""
+	}
+	var servers []string
+	for _, server := range items {
+		s := server.(map[string]interface{})
+
+		var server_id string
+		var port, weight, is_backup int
+		var stype, server_type string
+		if v, ok := s["server_id"]; ok {
+			server_id = v.(string)
+		}
+		if v, ok := s["port"]; ok {
+			port = v.(int)
+		}
+		if v, ok := s["weight"]; ok {
+			weight = v.(int)
+		}
+		if v, ok := s["type"]; ok {
+			stype = v.(string)
+		}
+		if v, ok := s["server_type"]; ok {
+			server_type = v.(string)
+		}
+		if v, ok := s["is_backup"]; ok {
+			is_backup = v.(int)
+		}
+		//for _, id := range server_ids {
+		str := fmt.Sprintf("{'ServerId':'%s','Port':'%d','Weight':'%d', 'Type': '%s', 'ServerType': '%s', 'IsBackup':'%d'}", strings.Trim(server_id, " "), port, weight, strings.Trim(stype, " "), strings.Trim(server_type, " "), is_backup)
+		servers = append(servers, str)
+		//}
+
+	}
+	return fmt.Sprintf("[%s]", strings.Join(servers, COMMA_SEPARATED))
+}
+
 func getLoadBalancerSpecOrder(spec string) int {
 	order := 0
 	switch spec {

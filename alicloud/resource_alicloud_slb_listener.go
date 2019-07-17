@@ -79,7 +79,12 @@ func resourceAliyunSlbListener() *schema.Resource {
 				Optional:     true,
 				Default:      WRRScheduler,
 			},
+
 			"server_group_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"master_slave_server_group_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -463,6 +468,17 @@ func resourceAliyunSlbListenerUpdate(d *schema.ResourceData, meta interface{}) e
 		update = true
 	}
 
+	if d.HasChange("master_slave_server_group_id") {
+		serverGroupId := d.Get("master_slave_server_group_id").(string)
+		if serverGroupId != "" {
+			commonRequest.QueryParams["MasterSlaveServerGroup"] = string(OnFlag)
+			commonRequest.QueryParams["MasterSlaveServerGroupId"] = d.Get("master_slave_server_group_id").(string)
+		} else {
+			commonRequest.QueryParams["MasterSlaveServerGroup"] = string(OffFlag)
+		}
+		update = true
+	}
+
 	if d.HasChange("bandwidth") {
 		commonRequest.QueryParams["Bandwidth"] = strconv.Itoa(d.Get("bandwidth").(int))
 		update = true
@@ -726,6 +742,10 @@ func buildListenerCommonArgs(d *schema.ResourceData, meta interface{}) (*request
 	if groupId, ok := d.GetOk("server_group_id"); ok && groupId.(string) != "" {
 		request.QueryParams["VServerGroupId"] = groupId.(string)
 	}
+
+	if groupId, ok := d.GetOk("master_slave_server_group_id"); ok && groupId.(string) != "" {
+		request.QueryParams["MasterSlaveServerGroupId"] = groupId.(string)
+	}
 	// acl status
 	if aclStatus, ok := d.GetOk("acl_status"); ok && aclStatus.(string) != "" {
 		request.QueryParams["AclStatus"] = aclStatus.(string)
@@ -796,7 +816,7 @@ func buildHttpForwardArgs(d *schema.ResourceData, req *requests.CommonRequest) (
 	req.QueryParams["HealthCheck"] = healthCheck
 	req.QueryParams["ListenerForward"] = listenerForward
 	/**
-	if the user do not fill backend_port, give 80 to pass the SDK parameter check.
+	  if the user do not fill backend_port, give 80 to pass the SDK parameter check.
 	*/
 	if backEndServerPort, ok := d.GetOk("backend_port"); ok {
 		req.QueryParams[""] = string(requests.NewInteger(backEndServerPort.(int)))
@@ -848,6 +868,9 @@ func readListener(d *schema.ResourceData, listener map[string]interface{}) {
 	}
 	if val, ok := listener["VServerGroupId"]; ok {
 		d.Set("server_group_id", val.(string))
+	}
+	if val, ok := listener["MasterSlaveServerGroupId"]; ok {
+		d.Set("MasterSlaveServerGroupId", val.(string))
 	}
 	if val, ok := listener["AclStatus"]; ok {
 		d.Set("acl_status", val.(string))
